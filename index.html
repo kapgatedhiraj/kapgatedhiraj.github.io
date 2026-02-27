@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Reading Stack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #f5f0e8;
+      --ink: #1a1714;
+      --accent: #c1440e;
+      --muted: #8a7f72;
+      --rule: #d4ccbc;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      padding: 0 24px;
+    }
+
+    /* grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 100;
+      opacity: 0.5;
+    }
+
+    header {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 72px 0 48px;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .site-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.4rem, 6vw, 3.6rem);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--muted);
+    }
+
+    .subtitle {
+      margin-top: 16px;
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding-bottom: 80px;
+    }
+
+    .entry {
+      border-bottom: 1px solid var(--rule);
+      padding: 28px 0;
+      opacity: 0;
+      transform: translateY(12px);
+      animation: fadeUp 0.4s ease forwards;
+    }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .entry:nth-child(1) { animation-delay: 0.05s; }
+    .entry:nth-child(2) { animation-delay: 0.12s; }
+    .entry:nth-child(3) { animation-delay: 0.19s; }
+    .entry:nth-child(4) { animation-delay: 0.26s; }
+    .entry:nth-child(5) { animation-delay: 0.33s; }
+    .entry:nth-child(6) { animation-delay: 0.40s; }
+
+    .entry-link {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .entry-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      font-weight: 400;
+      line-height: 1.3;
+      transition: color 0.15s;
+    }
+
+    .entry-link:hover .entry-title {
+      color: var(--accent);
+    }
+
+    .entry-meta {
+      margin-top: 6px;
+      font-size: 11px;
+      font-weight: 300;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    .arrow {
+      display: inline-block;
+      margin-left: 4px;
+      transition: transform 0.15s;
+    }
+
+    .entry-link:hover .arrow {
+      transform: translateX(3px);
+    }
+
+    footer {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 24px 0 48px;
+      font-size: 11px;
+      font-weight: 300;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <p class="site-label">A personal reading log</p>
+    <h1>The Reading <em>Stack</em></h1>
+    <p class="subtitle">Things worth a second look — updated whenever something sticks.</p>
+  </header>
+
+  <main>
+
+    <!-- ENTRY TEMPLATE
+         Copy one <div class="entry"> block and fill in:
+           href="..."  → the URL
+           entry-title → the title of the article/piece
+           entry-meta  → source name or domain
+    -->
+
+    <div class="entry">
+      <a class="entry-link" href="https://example.com" target="_blank" rel="noopener">
+        <div class="entry-title">The Unreasonable Effectiveness of Just Showing Up <span class="arrow">→</span></div>
+        <div class="entry-meta">fs.blog</div>
+      </a>
+    </div>
+
+    <div class="entry">
+      <a class="entry-link" href="https://example.com" target="_blank" rel="noopener">
+        <div class="entry-title">How Figma Builds Product <span class="arrow">→</span></div>
+        <div class="entry-meta">lennysnewsletter.com</div>
+      </a>
+    </div>
+
+    <div class="entry">
+      <a class="entry-link" href="https://example.com" target="_blank" rel="noopener">
+        <div class="entry-title">What I Wish Someone Had Told Me <span class="arrow">→</span></div>
+        <div class="entry-meta">sam.altman</div>
+      </a>
+    </div>
+
+    <div class="entry">
+      <a class="entry-link" href="https://example.com" target="_blank" rel="noopener">
+        <div class="entry-title">The Bitter Lesson — Rich Sutton <span class="arrow">→</span></div>
+        <div class="entry-meta">incompleteideas.net</div>
+      </a>
+    </div>
+
+    <div class="entry">
+      <a class="entry-link" href="https://example.com" target="_blank" rel="noopener">
+        <div class="entry-title">On the Shortness of Life — Seneca <span class="arrow">→</span></div>
+        <div class="entry-meta">wikisource.org</div>
+      </a>
+    </div>
+
+    <div class="entry">
+      <a class="entry-link" href="https://example.com" target="_blank" rel="noopener">
+        <div class="entry-title">Why Rome Fell and Why It Matters <span class="arrow">→</span></div>
+        <div class="entry-meta">aeon.co</div>
+      </a>
+    </div>
+
+  </main>
+
+  <footer>
+    &copy; 2026 — built with plain HTML &amp; hosted on GitHub Pages
+  </footer>
+
+</body>
+</html>
