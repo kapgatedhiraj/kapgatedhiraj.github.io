@@ -252,6 +252,15 @@
     .pie-leg-item { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 300; color: var(--muted); }
     .pie-leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .pie-leg-pct { color: var(--ink); font-weight: 400; margin-left: 2px; }
+    .cap-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .cap-table tr { border-bottom: 1px solid var(--rule); }
+    .cap-table tr.section-row td { padding-top: 12px; font-size: 10px; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--ink); padding-bottom: 4px; }
+    .cap-table tr.total-row td { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; padding: 10px 0 6px; border-top: 2px solid var(--ink); border-bottom: none; }
+    .cap-table td { padding: 7px 0; vertical-align: middle; }
+    .cap-table td:last-child { text-align: right; font-weight: 400; color: var(--ink); }
+    .cap-table td.sub { padding-left: 14px; color: var(--muted); font-weight: 300; }
+    .cap-table td.bold { font-weight: 400; color: var(--ink); }
+    .cap-table td.share { color: var(--muted); font-size: 10px; text-align: right; padding-right: 8px; }
   </style>
 </head>
 <body>
@@ -265,15 +274,27 @@
 
   <!-- Installed Capacity Section -->
   <div class="trend-section" id="capSection">
-    <div class="trend-header">
-      <div class="trend-title">All India Installed Capacity</div>
-      <div class="trend-sub">Jan 2026 — 520.5k MW total &nbsp;·&nbsp; <span style="color:#2a7a3b">▲ 24.1% YoY</span></div>
+    <div class="trend-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div class="trend-title">All India Installed Capacity</div>
+        <div class="trend-sub" id="capSubhead">as of Jan 2026</div>
+      </div>
+      <div>
+        <label style="font-size:10px;font-weight:300;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-right:6px;">Month</label>
+        <select id="capMonthSelect" onchange="renderCapSection()" style="background:var(--bg);border:1px solid var(--rule);color:var(--ink);font-family:'DM Mono',monospace;font-size:11px;padding:5px 24px 5px 10px;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22%3E%3Cpath d=%22M0 0l5 6 5-6z%22 fill=%22%238a7f72%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 8px center;"></select>
+      </div>
     </div>
-    <div class="pie-wrap">
-      <canvas id="capPie" width="160" height="160"></canvas>
-      <div class="pie-legend" id="pieLegend"></div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:20px;align-items:flex-start;">
+      <div>
+        <canvas id="capPie" width="180" height="180"></canvas>
+        <div class="pie-legend" id="pieLegend" style="margin-top:12px;"></div>
+      </div>
+      <div style="flex:1;min-width:220px;">
+        <table class="cap-table" id="capTable"></table>
+      </div>
     </div>
   </div>
+
   <!-- RES trend stacked bars -->
   <div class="trend-section">
     <div class="trend-header">
@@ -311,6 +332,34 @@
       <canvas id="myChart"></canvas>
     </div>
   </div>
+  <!-- Capacity Addition Section -->
+  <div class="trend-section">
+    <div class="trend-header">
+      <div class="trend-title">Capacity Additions</div>
+      <div class="trend-sub">New MW commissioned by source — annual &amp; monthly (FY26 YTD)</div>
+    </div>
+
+    <!-- Annual summary bars -->
+    <div style="margin-bottom:20px;">
+      <div style="font-size:10px;font-weight:300;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Annual Total (MW)</div>
+      <div id="addAnnualBars"></div>
+    </div>
+
+    <!-- Monthly breakdown FY26 -->
+    <div>
+      <div style="font-size:10px;font-weight:300;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Monthly Additions — FY26 YTD (MW)</div>
+      <div style="position:relative;height:160px;">
+        <canvas id="addMonthlyChart"></canvas>
+      </div>
+    </div>
+
+    <div class="trend-legend" style="margin-top:14px;">
+      <span class="leg-item"><span class="leg-dot" style="background:#4caf7d"></span>RE</span>
+      <span class="leg-item"><span class="leg-dot" style="background:#c1440e"></span>Thermal</span>
+      <span class="leg-item"><span class="leg-dot" style="background:#5b8fa8"></span>Hydro</span>
+      <span class="leg-item"><span class="leg-dot" style="background:#9b8ea8"></span>Nuclear</span>
+    </div>
+  </div>
 </main>
 <footer>
   Data sourced from CEA Monthly Reports and Coal Ministry publications. Last updated: Jan 2026.
@@ -318,17 +367,32 @@
 <script>
 const DATA = {"Power Consumption": {"unit": "BU", "annual": {"FY2020": 1284.44, "FY21": 1271.54, "FY22": 1373.97, "FY23": 1505.91, "FY24": 1621.26, "FY25": 1696.35, "FY26": 1564.58}, "monthly": {"Sep 2019": 107.51, "Oct 2019": 97.84, "Nov 2019": 93.94, "Dec 2019": 101.08, "Jan 2020": 105.15, "Feb 2020": 103.81, "Mar 2020": 98.95, "Apr 2020": 84.55, "May 2020": 102.08, "Jun 2020": 105.08, "Jul 2020": 112.14, "Aug 2020": 109.21, "Sep 2020": 112.24, "Oct 2020": 109.17, "Nov 2020": 96.88, "Dec 2020": 105.62, "Jan 2021": 109.76, "Feb 2021": 103.25, "Mar 2021": 120.63, "Apr 2021": 117.08, "May 2021": 108.8, "Jun 2021": 114.48, "Jul 2021": 123.72, "Aug 2021": 127.88, "Sep 2021": 112.43, "Oct 2021": 112.79, "Nov 2021": 99.32, "Dec 2021": 109.17, "Jan 2022": 111.8, "Feb 2022": 108.03, "Mar 2022": 128.47, "Apr 2022": 132.02, "May 2022": 135.15, "Jun 2022": 133.26, "Jul 2022": 128.25, "Aug 2022": 130.39, "Sep 2022": 127.39, "Oct 2022": 113.94, "Nov 2022": 110.25, "Dec 2022": 121.19, "Jan 2023": 126.3, "Feb 2023": 118.29, "Mar 2023": 128.12, "Apr 2023": 130.08, "May 2023": 136.5, "Jun 2023": 140.27, "Jul 2023": 140.41, "Aug 2023": 151.32, "Sep 2023": 141.29, "Oct 2023": 139.44, "Nov 2023": 119.65, "Dec 2023": 123.17, "Jan 2024": 133.94, "Feb 2024": 127.34, "Mar 2024": 138.95, "Apr 2024": 144.28, "May 2024": 155.15, "Jun 2024": 152.37, "Jul 2024": 149.65, "Aug 2024": 144.11, "Sep 2024": 140.61, "Oct 2024": 140.47, "Nov 2024": 123.79, "Dec 2024": 129.39, "Jan 2025": 137.49, "Feb 2025": 130.56, "Mar 2025": 148.48, "Apr 2025": 147.48, "May 2025": 148.71, "Jun 2025": 150.04, "Jul 2025": 153.63, "Aug 2025": 150.47, "Sep 2025": 145.66, "Oct 2025": 131.07, "Nov 2025": 123.4, "Dec 2025": 138.39, "Jan 2026": 142.74}}, "Electricity Generation - All India": {"unit": "BU", "annual": {"FY24": 1739.09, "FY25": 1829.69, "FY26": 1540.88}, "monthly": {"Jan 2024": 144.08, "Feb 2024": 136.79, "Mar 2024": 149.25, "Apr 2024": 154.28, "May 2024": 167.49, "Jun 2024": 162.83, "Jul 2024": 160.84, "Aug 2024": 155.07, "Sep 2024": 151.16, "Oct 2024": 151.79, "Nov 2024": 134.52, "Dec 2024": 140.83, "Jan 2025": 147.37, "Feb 2025": 141.78, "Mar 2025": 160.4, "Apr 2025": 157.65, "May 2025": 159.67, "Jun 2025": 160.88, "Jul 2025": 166.66, "Aug 2025": 161.58, "Sep 2025": 155.85, "Oct 2025": 141.34, "Nov 2025": 132.48, "Dec 2025": 149.74, "Jan 2026": 155.03}}, "Thermal Generation": {"unit": "BU", "annual": {"FY24": 1326.55, "FY25": 1363.89, "FY26": 1079.66}, "monthly": {"Jan 2024": 117.5, "Feb 2024": 109.35, "Mar 2024": 118.91, "Apr 2024": 123.64, "May 2024": 127.78, "Jun 2024": 120.81, "Jul 2024": 111.34, "Aug 2024": 104.13, "Sep 2024": 102.09, "Oct 2024": 114.02, "Nov 2024": 104.19, "Dec 2024": 108.17, "Jan 2025": 113.96, "Feb 2025": 110.4, "Mar 2025": 122.66, "Apr 2025": 119.07, "May 2025": 114.1, "Jun 2025": 108.81, "Jul 2025": 106.13, "Aug 2025": 104.54, "Sep 2025": 102.01, "Oct 2025": 97.66, "Nov 2025": 97.86, "Dec 2025": 113.39, "Jan 2026": 116.09}}, "Hydro Generation": {"unit": "BU", "annual": {"FY24": 134.05, "FY25": 148.63, "FY26": 150.05}, "monthly": {"Jan 2024": 6.35, "Feb 2024": 5.93, "Mar 2024": 7.02, "Apr 2024": 8.13, "May 2024": 12.63, "Jun 2024": 14.21, "Jul 2024": 17.56, "Aug 2024": 21.57, "Sep 2024": 20.57, "Oct 2024": 14.46, "Nov 2024": 8.63, "Dec 2024": 7.75, "Jan 2025": 7.39, "Feb 2025": 6.97, "Mar 2025": 8.76, "Apr 2025": 9.62, "May 2025": 13.26, "Jun 2025": 16.78, "Jul 2025": 21.67, "Aug 2025": 23.52, "Sep 2025": 22.32, "Oct 2025": 16.44, "Nov 2025": 9.82, "Dec 2025": 8.77, "Jan 2026": 7.85}}, "Nuclear Generation": {"unit": "BU", "annual": {"FY24": 47.94, "FY25": 56.68, "FY26": 45.21}, "monthly": {"Jan 2024": 4.15, "Feb 2024": 3.5, "Mar 2024": 4.02, "Apr 2024": 4.44, "May 2024": 4.45, "Jun 2024": 4.22, "Jul 2024": 4.8, "Aug 2024": 5.49, "Sep 2024": 4.93, "Oct 2024": 4.77, "Nov 2024": 4.81, "Dec 2024": 5.12, "Jan 2025": 4.78, "Feb 2025": 4.15, "Mar 2025": 4.72, "Apr 2025": 4.95, "May 2025": 5.14, "Jun 2025": 4.5, "Jul 2025": 4.54, "Aug 2025": 4.11, "Sep 2025": 4.05, "Oct 2025": 4.81, "Nov 2025": 3.86, "Dec 2025": 4.22, "Jan 2026": 5.03}}, "RES Generation": {"unit": "BU", "annual": {"FY24": 225.83, "FY25": 255.01, "FY26": 258.32}, "monthly": {"Jan 2024": 16.06, "Feb 2024": 18.0, "Mar 2024": 19.28, "Apr 2024": 17.99, "May 2024": 22.5, "Jun 2024": 23.05, "Jul 2024": 25.97, "Aug 2024": 22.71, "Sep 2024": 22.4, "Oct 2024": 17.7, "Nov 2024": 16.76, "Dec 2024": 19.77, "Jan 2025": 21.18, "Feb 2025": 20.19, "Mar 2025": 24.14, "Apr 2025": 23.85, "May 2025": 26.6, "Jun 2025": 29.66, "Jul 2025": 32.83, "Aug 2025": 27.86, "Sep 2025": 26.06, "Oct 2025": 21.49, "Nov 2025": 20.6, "Dec 2025": 23.33, "Jan 2026": 26.04}}, "Wind Generation": {"unit": "BU", "annual": {"FY24": 83.39, "FY25": 83.35, "FY26": 95.58}, "monthly": {"Jan 2024": 4.08, "Feb 2024": 4.91, "Mar 2024": 4.58, "Apr 2024": 4.73, "May 2024": 8.26, "Jun 2024": 10.13, "Jul 2024": 13.63, "Aug 2024": 10.27, "Sep 2024": 8.87, "Oct 2024": 3.24, "Nov 2024": 3.11, "Dec 2024": 5.75, "Jan 2025": 5.64, "Feb 2025": 4.59, "Mar 2025": 5.13, "Apr 2025": 6.33, "May 2025": 10.67, "Jun 2025": 14.88, "Jul 2025": 17.57, "Aug 2025": 12.89, "Sep 2025": 10.4, "Oct 2025": 6.41, "Nov 2025": 4.48, "Dec 2025": 5.01, "Jan 2026": 6.94}}, "Solar Generation": {"unit": "BU", "annual": {"FY24": 115.98, "FY25": 144.15, "FY26": 138.39}, "monthly": {"Jan 2024": 9.01, "Feb 2024": 10.42, "Mar 2024": 12.23, "Apr 2024": 12.02, "May 2024": 12.65, "Jun 2024": 11.45, "Jul 2024": 10.36, "Aug 2024": 10.16, "Sep 2024": 11.3, "Oct 2024": 12.26, "Nov 2024": 11.25, "Dec 2024": 10.71, "Jan 2025": 12.29, "Feb 2025": 12.91, "Mar 2025": 16.81, "Apr 2025": 15.81, "May 2025": 14.31, "Jun 2025": 12.93, "Jul 2025": 12.1, "Aug 2025": 12.63, "Sep 2025": 13.56, "Oct 2025": 13.06, "Nov 2025": 13.19, "Dec 2025": 14.95, "Jan 2026": 15.85}}, "Coal Production": {"unit": "mn tons", "annual": {"FY2020": 730.87, "FY21": 716.08, "FY22": 778.21, "FY23": 893.19, "FY24": 997.23, "FY25": 1040.0, "FY26": 829.32}, "monthly": {"Jan 2023": 90.42, "Nov 2023": 84.52, "Jan 2024": 99.73, "Feb 2024": 96.0, "Apr 2024": 78.71, "May 2024": 83.96, "Jun 2024": 84.73, "Jul 2024": 74.01, "Aug 2024": 62.63, "Sep 2024": 68.9, "Oct 2024": 84.62, "Nov 2024": 90.81, "Dec 2024": 97.94, "Jan 2025": 104.59, "Apr 2025": 81.57, "May 2025": 86.34, "Jun 2025": 78.98, "Jul 2025": 64.86, "Aug 2025": 69.87, "Sep 2025": 68.18, "Oct 2025": 77.43, "Nov 2025": 92.68, "Dec 2025": 101.45, "Jan 2026": 107.96}}, "Coal India Production": {"unit": "MT", "annual": {"FY2020": 602.13, "FY21": 596.22, "FY22": 622.63, "FY23": 703.2, "FY24": 773.64, "FY25": 781.1, "FY26": 683.7}, "monthly": {"Feb 2024": 74.8, "Mar 2024": 88.6, "Apr 2024": 61.8, "May 2024": 64.41, "Jun 2024": 63.1, "Jul 2024": 55.04, "Aug 2024": 46.07, "Sep 2024": 50.95, "Oct 2024": 62.47, "Nov 2024": 67.18, "Dec 2024": 72.37, "Jan 2025": 77.79, "Feb 2025": 74.1, "Mar 2025": 85.8, "Apr 2025": 62.1, "May 2025": 63.49, "Jun 2025": 57.75, "Jul 2025": 46.44, "Aug 2025": 50.4, "Sep 2025": 48.97, "Oct 2025": 56.38, "Nov 2025": 67.99, "Dec 2025": 75.67, "Jan 2026": 79.81, "Feb 2026": 74.7}}, "Installed Capacity - Total": {"unit": "MW", "annual": {"FY25": 475211.81}, "monthly": {"Jan 2025": 419282.63, "Feb 2025": 470448.17, "Mar 2025": 475211.81, "Apr 2025": 472468.02, "May 2025": 475590.39, "Jun 2025": 484818.82, "Jul 2025": 490060.69, "Aug 2025": 495545.38, "Sep 2025": 500889.22, "Oct 2025": 505293.06, "Nov 2025": 509743.41, "Dec 2025": 513729.69, "Jan 2026": 520510.95}}, "Installed Capacity - Coal": {"unit": "MW", "annual": {"FY25": 215193.01}, "monthly": {"Jan 2025": 213873.01, "Feb 2025": 215193.01, "Mar 2025": 215193.01, "Apr 2025": 212718.01, "May 2025": 212718.01, "Jun 2025": 214698.0, "Jul 2025": 216448.0, "Aug 2025": 216798.0, "Sep 2025": 217458.0, "Oct 2025": 218528.0, "Nov 2025": 219610.0, "Dec 2025": 219610.0, "Jan 2026": 221210.0}}, "Installed Capacity - RES": {"unit": "MW", "annual": {"FY25": 220096.34}, "monthly": {"Jan 2025": 165202.21, "Feb 2025": 214677.7, "Mar 2025": 220096.34, "Apr 2025": 223628.39, "May 2025": 226750.76, "Jun 2025": 233999.2, "Jul 2025": 237491.07, "Aug 2025": 242625.76, "Sep 2025": 247309.6, "Oct 2025": 250643.44, "Nov 2025": 254021.47, "Dec 2025": 258008.07, "Jan 2026": 263189.33}}};
 
+const CAP_DATA = {"Jan 2025":{"coal":213873.01,"fossil_other":32027.41,"fossil_total":245900.42,"nuclear":8180.0,"res_exc_hydro":118234.04,"hydro_large":46968.17,"nonfossil_total":173382.21,"grand_total":419282.63},"Feb 2025":{"coal":215193.01,"fossil_other":32397.46,"fossil_total":247590.47,"nuclear":8180.0,"res_exc_hydro":169709.53,"hydro_large":44968.17,"nonfossil_total":222857.7,"grand_total":470448.17},"Mar 2025":{"coal":215193.01,"fossil_other":31742.46,"fossil_total":246935.47,"nuclear":8180.0,"res_exc_hydro":172368.18,"hydro_large":47728.16,"nonfossil_total":228276.34,"grand_total":475211.81},"Apr 2025":{"coal":212718.01,"fossil_other":27341.62,"fossil_total":240059.63,"nuclear":8780.0,"res_exc_hydro":175700.23,"hydro_large":47928.16,"nonfossil_total":232408.39,"grand_total":472468.02},"May 2025":{"coal":212718.01,"fossil_other":27341.62,"fossil_total":240059.63,"nuclear":8780.0,"res_exc_hydro":178822.6,"hydro_large":47928.16,"nonfossil_total":235530.76,"grand_total":475590.39},"Jun 2025":{"coal":214698.0,"fossil_other":27341.62,"fossil_total":242039.62,"nuclear":8780.0,"res_exc_hydro":184621.04,"hydro_large":49378.16,"nonfossil_total":242779.2,"grand_total":484818.82},"Jul 2025":{"coal":216448.0,"fossil_other":27341.62,"fossil_total":243789.62,"nuclear":8780.0,"res_exc_hydro":187862.91,"hydro_large":49628.16,"nonfossil_total":246271.07,"grand_total":490060.69},"Aug 2025":{"coal":216798.0,"fossil_other":27341.62,"fossil_total":244139.62,"nuclear":8780.0,"res_exc_hydro":192517.6,"hydro_large":50108.16,"nonfossil_total":251405.76,"grand_total":495545.38},"Sep 2025":{"coal":217458.0,"fossil_other":27341.62,"fossil_total":244799.62,"nuclear":8780.0,"res_exc_hydro":197201.44,"hydro_large":50108.16,"nonfossil_total":256089.6,"grand_total":500889.22},"Oct 2025":{"coal":218528.0,"fossil_other":27341.62,"fossil_total":245869.62,"nuclear":8780.0,"res_exc_hydro":200295.28,"hydro_large":50348.16,"nonfossil_total":259423.44,"grand_total":505293.06},"Nov 2025":{"coal":219610.0,"fossil_other":27331.94,"fossil_total":246941.94,"nuclear":8780.0,"res_exc_hydro":203606.81,"hydro_large":50414.66,"nonfossil_total":262801.47,"grand_total":509743.41},"Dec 2025":{"coal":219610.0,"fossil_other":27331.62,"fossil_total":246941.62,"nuclear":8780.0,"res_exc_hydro":207093.41,"hydro_large":50914.66,"nonfossil_total":266788.07,"grand_total":513729.69},"Jan 2026":{"coal":221210.0,"fossil_other":27331.62,"fossil_total":248541.62,"nuclear":8780.0,"res_exc_hydro":212024.67,"hydro_large":51164.66,"nonfossil_total":271969.33,"grand_total":520510.95}};
+
 let currentView = 'monthly';
 let chart = null;
+let capChart = null;
 
+// Populate metric select — exclude installed capacity metrics
+const EXCLUDE = ['Installed Capacity - Total','Installed Capacity - Coal','Installed Capacity - RES'];
 const select = document.getElementById('metricSelect');
-Object.keys(DATA).forEach(key => {
+Object.keys(DATA).filter(k => !EXCLUDE.includes(k)).forEach(key => {
   const opt = document.createElement('option');
   opt.value = key;
   opt.textContent = key;
   select.appendChild(opt);
 });
 select.addEventListener('change', renderChart);
+
+// Populate month select
+const capMonthSelect = document.getElementById('capMonthSelect');
+Object.keys(CAP_DATA).forEach(m => {
+  const opt = document.createElement('option');
+  opt.value = m;
+  opt.textContent = m;
+  if (m === 'Jan 2026') opt.selected = true;
+  capMonthSelect.appendChild(opt);
+});
 
 function setView(v) {
   currentView = v;
@@ -498,31 +562,35 @@ function renderTrend() {
   `).join('');
 }
 
-function renderCapPie() {
-  // Jan 2026 values in MW
-  const segments = [
-    { label: 'Fossil (Coal+Gas+Other)', value: 248541.62, color: '#c1440e' },
-    { label: 'RES (ex-Hydro)',          value: 212024.67, color: '#4caf7d' },
-    { label: 'Hydro',                   value: 51164.66,  color: '#5b8fa8' },
-    { label: 'Nuclear',                 value: 8780,      color: '#9b8ea8' },
-  ];
-  const total = segments.reduce((s, d) => s + d.value, 0);
+function renderCapSection() {
+  const month = document.getElementById('capMonthSelect').value;
+  const d = CAP_DATA[month];
+  const total = d.grand_total;
+  const fmt = v => v ? (v/1000).toFixed(1) + 'k' : '—';
+  const pct = v => v && total ? (v/total*100).toFixed(1) + '%' : '—';
 
-  // Build legend
+  document.getElementById('capSubhead').textContent = `as of ${month} — ${fmt(total)} MW total`;
+
+  // Pie segments: Fossil, RES exc hydro, Large Hydro, Nuclear
+  const segments = [
+    { label: 'Fossil', value: d.fossil_total, color: '#c1440e' },
+    { label: 'RES (ex-Hydro)', value: d.res_exc_hydro, color: '#4caf7d' },
+    { label: 'Large Hydro', value: d.hydro_large, color: '#5b8fa8' },
+    { label: 'Nuclear', value: d.nuclear, color: '#9b8ea8' },
+  ];
+
   document.getElementById('pieLegend').innerHTML = segments.map(s => {
-    const pct = (s.value / total * 100).toFixed(1);
-    return `<div class="pie-leg-item">
-      <div class="pie-leg-dot" style="background:${s.color}"></div>
-      ${s.label} <span class="pie-leg-pct">${pct}%</span>
-    </div>`;
+    const p = s.value && total ? (s.value/total*100).toFixed(1) : '—';
+    return `<div class="pie-leg-item"><div class="pie-leg-dot" style="background:${s.color}"></div>${s.label} <span class="pie-leg-pct">${p}%</span></div>`;
   }).join('');
 
-  new Chart(document.getElementById('capPie'), {
+  if (capChart) capChart.destroy();
+  capChart = new Chart(document.getElementById('capPie'), {
     type: 'doughnut',
     data: {
       labels: segments.map(s => s.label),
       datasets: [{
-        data: segments.map(s => s.value),
+        data: segments.map(s => s.value || 0),
         backgroundColor: segments.map(s => s.color),
         borderColor: '#ede8de',
         borderWidth: 2,
@@ -543,18 +611,119 @@ function renderCapPie() {
           callbacks: {
             label: ctx => {
               const val = ctx.parsed;
-              const pct = (val / total * 100).toFixed(1);
-              return ` ${(val/1000).toFixed(1)}k MW  (${pct}%)`;
+              const p = (val/total*100).toFixed(1);
+              return ` ${(val/1000).toFixed(1)}k MW  (${p}%)`;
             }
           }
         }
       }
     }
   });
+
+  // Table
+  document.getElementById('capTable').innerHTML = `
+    <tr class="section-row"><td colspan="3">Fossil Fuel Based</td></tr>
+    <tr><td class="sub">Coal</td><td class="share">${pct(d.coal)}</td><td>${fmt(d.coal)} MW</td></tr>
+    <tr><td class="sub">Other (Gas, Lignite, Diesel)</td><td class="share">${pct(d.fossil_other)}</td><td>${fmt(d.fossil_other)} MW</td></tr>
+    <tr><td class="bold">Fossil Total</td><td class="share">${pct(d.fossil_total)}</td><td><strong>${fmt(d.fossil_total)} MW</strong></td></tr>
+
+    <tr class="section-row"><td colspan="3">Non-Fossil Based</td></tr>
+    <tr><td class="sub">Nuclear</td><td class="share">${pct(d.nuclear)}</td><td>${fmt(d.nuclear)} MW</td></tr>
+    <tr><td class="sub">RES (excl. Large Hydro)</td><td class="share">${pct(d.res_exc_hydro)}</td><td>${fmt(d.res_exc_hydro)} MW</td></tr>
+    <tr><td class="sub">Large Hydro</td><td class="share">${pct(d.hydro_large)}</td><td>${fmt(d.hydro_large)} MW</td></tr>
+    <tr><td class="bold">Non-Fossil Total</td><td class="share">${pct(d.nonfossil_total)}</td><td><strong>${fmt(d.nonfossil_total)} MW</strong></td></tr>
+
+    <tr class="total-row"><td colspan="2">Grand Total</td><td>${fmt(d.grand_total)} MW</td></tr>
+  `;
+}
+
+function renderCapAdditions() {
+  const annual = {
+    "FY24": {"Thermal":5754,"Hydro":60,"RE":18484.7,"Nuclear":1400,"Total":25698.7},
+    "FY25": {"Thermal":3875,"Hydro":800,"RE":28723.67,"Nuclear":0,"Total":33398.66},
+    "FY26": {"Thermal":7320,"Hydro":2890,"RE":39656.49,"Nuclear":700,"Total":50566.49}
+  };
+  const monthly = {"Jan 2025":{"Thermal":1460,"Hydro":0,"RE":2725.63,"Nuclear":0},"Feb 2025":{"Thermal":1320,"Hydro":0,"RE":2507.32,"Nuclear":0},"Mar 2025":{"Thermal":-655,"Hydro":666.66,"RE":4658.65,"Nuclear":0},"Apr 2025":{"Thermal":350,"Hydro":200,"RE":3332.05,"Nuclear":700},"May 2025":{"Thermal":-830,"Hydro":0,"RE":3122.37,"Nuclear":0},"Jun 2025":{"Thermal":1320,"Hydro":970,"RE":5798.44,"Nuclear":0},"Jul 2025":{"Thermal":1750,"Hydro":250,"RE":3241.87,"Nuclear":0},"Aug 2025":{"Thermal":350,"Hydro":480,"RE":4654.69,"Nuclear":0},"Sep 2025":{"Thermal":660,"Hydro":0,"RE":4683.84,"Nuclear":0},"Oct 2025":{"Thermal":800,"Hydro":240,"RE":3093.84,"Nuclear":0},"Nov 2025":{"Thermal":1320,"Hydro":0,"RE":3311.53,"Nuclear":0},"Dec 2025":{"Thermal":0,"Hydro":500,"RE":3486.6,"Nuclear":0},"Jan 2026":{"Thermal":1600,"Hydro":250,"RE":4931.26,"Nuclear":0}};
+
+  // Annual bars
+  const maxTotal = Math.max(...Object.values(annual).map(d => d.Total));
+  document.getElementById('addAnnualBars').innerHTML = Object.entries(annual).map(([fy, d]) => {
+    const barW = (d.Total / maxTotal * 100).toFixed(1);
+    const reW  = (d.RE / d.Total * 100).toFixed(1);
+    const thW  = (Math.max(0,d.Thermal) / d.Total * 100).toFixed(1);
+    const hyW  = (d.Hydro / d.Total * 100).toFixed(1);
+    const nuW  = ((d.Nuclear||0) / d.Total * 100).toFixed(1);
+    return `<div class="trend-row" style="margin-bottom:8px;">
+      <div class="trend-label">${fy}</div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:3px;">
+        <div style="display:flex;height:22px;overflow:hidden;border-radius:2px;width:${barW}%">
+          <div style="width:${reW}%;background:#4caf7d;display:flex;align-items:center;justify-content:center;font-size:9px;color:rgba(255,255,255,0.9);overflow:hidden;white-space:nowrap;">${d.RE >= 5000 ? Math.round(d.RE/1000)+'k' : ''}</div>
+          <div style="width:${thW}%;background:#c1440e;"></div>
+          <div style="width:${hyW}%;background:#5b8fa8;"></div>
+          <div style="width:${nuW}%;background:#9b8ea8;"></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);font-weight:300;">${Math.round(d.Total).toLocaleString()} MW total &nbsp;·&nbsp; RE: ${Math.round(d.RE/d.Total*100)}%</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Monthly stacked bar chart
+  const labels = Object.keys(monthly);
+  const colors = { RE:'#4caf7d', Thermal:'#c1440e', Hydro:'#5b8fa8', Nuclear:'#9b8ea8' };
+  new Chart(document.getElementById('addMonthlyChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: ['RE','Thermal','Hydro','Nuclear'].map(k => ({
+        label: k,
+        data: labels.map(m => monthly[m][k] || 0),
+        backgroundColor: colors[k],
+        borderWidth: 0,
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { font: { family:'DM Mono', size:9 }, color:'#8a7f72', maxRotation:45 } },
+        y: {
+            stacked: true,
+            min: -1000,
+            grid: { color:'rgba(212,204,188,0.5)', lineWidth: 1 },
+            ticks: { font: { family:'DM Mono', size:9 }, color:'#8a7f72', stepSize: 1000, callback: v => v === 0 ? '0' : (v/1000).toFixed(0)+'k' }
+          }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor:'#1a1714', titleColor:'#f5f0e8', bodyColor:'#d4ccbc',
+          titleFont:{family:'DM Mono',size:11}, bodyFont:{family:'DM Mono',size:11},
+          callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} MW` }
+        }
+      },
+      animation: { onComplete: () => {} }
+    },
+    plugins: [{
+      id: 'zeroLine',
+      afterDraw(chart) {
+        const { ctx, scales: { x, y } } = chart;
+        const yZero = y.getPixelForValue(0);
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x.left, yZero);
+        ctx.lineTo(x.right, yZero);
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(26,23,20,0.5)';
+        ctx.stroke();
+        ctx.restore();
+      }
+    }]
+  });
 }
 
 renderStats();
-renderCapPie();
+renderCapSection();
+renderCapAdditions();
 renderTrend();
 renderChart();
 </script>
